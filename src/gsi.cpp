@@ -90,9 +90,11 @@ void Gsi::vector (unsigned vector)
 {
     unsigned gsi = vector - VEC_GSI;
 
+    if (gsi == 1)
+        trace(0, "key pessed - count %x", Counter::gsi[gsi]);
+
     if (gsi == Keyb::gsi)
         Keyb::interrupt();
-
     else if (gsi == Acpi::gsi)
         Acpi::interrupt();
 
