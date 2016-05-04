@@ -609,9 +609,55 @@ void Ec::sys_ec_ctrl()
 
         ec->regs.set_hazard (HZD_RECALL);
 
-        if (Cpu::id != ec->cpu && Ec::remote (ec->cpu) == ec)
+        if (Cpu::id != ec->cpu && Ec::remote (ec->cpu) == ec) {
             Lapic::send_ipi (ec->cpu, VEC_IPI_RKE);
+            if (r->state_requested())
+                sys_finish<Sys_regs::COM_TIM>();
+        }
+    }
 
+    if (r->state_requested() && current->utcb) {
+
+        Cpu_regs regs(ec->regs);
+
+        regs.mtd = Mtd::GPR_ACDB |
+                   Mtd::GPR_BSD |
+#ifdef __x86_64__
+                   Mtd::GPR_R8_R15 |
+#endif
+                   Mtd::RSP |
+                   Mtd::RIP_LEN |
+                   Mtd::RFLAGS |
+                   Mtd::QUAL;
+
+        if (((ec->cont != ret_user_iret) && (ec->cont != recv_kern))) {
+            /* in syscall */
+            regs.REG(ip) = ec->regs.ARG_IP;
+            regs.REG(sp) = ec->regs.ARG_SP;
+        }
+
+        /*
+         * Find out if the EC is in exception handling state, which is the
+         * case if it has called an exception handler portal. The exception
+         * numbers in the comparison are the ones handled as exception in
+         * 'entry.S'. Page fault exceptions are not of interest for GDB, which
+         * is currently the only user of this status information.
+         */
+        if ((ec->cont == ret_user_iret) &&
+            (ec->partner != nullptr) && 
+            (ec->partner->cont == recv_kern) &&
+            ((regs.dst_portal <= 0x01) ||
+             ((regs.dst_portal >= 0x03) && (regs.dst_portal <= 0x07)) ||
+             ((regs.dst_portal >= 0x0a) && (regs.dst_portal <= 0x0d)) ||
+             ((regs.dst_portal >= 0x10) && (regs.dst_portal <= 0x13)))) {
+		
+            /* 'regs.err' will be transferred into utcb->qual[0] */
+            regs.err = 1;
+        } else
+            regs.err = 0;
+
+        /* the 'if' avoids an "unused result" warning */
+        if (current->utcb->load_exc (&regs)) {}
     }
 }
             break;
