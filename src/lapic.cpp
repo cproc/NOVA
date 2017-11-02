@@ -73,7 +73,7 @@ void Lapic::init(bool invariant_tsc)
         /* read out tsc freq if supported */
         if (invariant_tsc && Cpu::vendor == Cpu::Vendor::INTEL && Cpu::family >= 6) {
             ratio = static_cast<unsigned>(Msr::read<uint64>(Msr::MSR_PLATFORM_INFO) >> 8) & 0xff;
-            if (Cpu::model >= 0x3a) { /* Nehalem and later */
+            if (Cpu::model >= 0x2a) { /* Sandy Bridge and later */
                 freq_tsc = static_cast<unsigned>(ratio * 100000);
                 freq_bus = dl ? 0 : 100000;
             } else {
