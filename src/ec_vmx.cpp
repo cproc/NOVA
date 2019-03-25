@@ -71,6 +71,7 @@ void Ec::vmx_exception()
                     current->regs.cr2 = cr2;
                     Vmcs::write (Vmcs::ENT_INTR_INFO,  intr_info & ~0x1000);
                     Vmcs::write (Vmcs::ENT_INTR_ERROR, err);
+                    [[gnu::fallthrough]];
 
                 case Vtlb::SUCCESS:
                     ret_user_vmresume();

@@ -71,6 +71,7 @@ void Ec::svm_exception (mword reason)
                 case Vtlb::GLA_GPA:
                     current->regs.vmcb->cr2 = cr2;
                     current->regs.vmcb->inj_control = static_cast<uint64>(err) << 32 | 0x80000b0e;
+                    [[gnu::fallthrough]];
 
                 case Vtlb::SUCCESS:
                     ret_user_vmrun();
@@ -141,6 +142,7 @@ void Ec::svm_cr(mword const reason)
                 current->regs.dst_portal = reason;
                 send_msg<ret_user_vmrun>();
             }
+            [[gnu::fallthrough]];
         }
         default:
             die ("SVM decode failure");
