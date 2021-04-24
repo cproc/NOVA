@@ -162,7 +162,6 @@ void Cpu::check_features()
                 [[fallthrough]];
             case 0x1:
                 cpuid (0x80000001, eax, ebx, features[5], features[4]);
-                [[fallthrough]];
         }
 
         if (vendor == AMD && smt)
